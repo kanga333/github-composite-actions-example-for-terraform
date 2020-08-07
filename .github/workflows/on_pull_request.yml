@@ -1,0 +1,36 @@
+name: "On pull request"
+on: [pull_request]
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v1
+      - uses: hashicorp/setup-terraform@v1
+      - id: composite
+        uses: ./.github/actions/terraform/
+        with:
+          working_dir: 'terraform'
+      - uses: actions/github-script@0.9.0
+        env:
+          PLAN: "terraform\n${{ steps.composite.outputs.plan_stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Plan 📖
+            
+            <details><summary>Show Plan</summary>
+            
+            \`\`\`${process.env.PLAN}\`\`\`
+            
+            </details>
+            
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+              
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })

@@ -1,0 +1,33 @@
+name: "Terraforn Composite Action Example"
+description: "Set up terraform and run lint, validate, plan and apply."
+inputs:
+  working_dir:
+    description: 'Directory to run terraform'
+    default: '.'
+outputs:
+  plan_stdout:
+    description: 'plan stdout'
+    value: ${{ steps.plan.outputs.stdout }}
+runs:
+    using: "composite"
+    steps:
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt
+        shell: bash
+        working-directory: ${{ inputs.working_dir }}
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        shell: bash
+        working-directory: ${{ inputs.working_dir }}
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        shell: bash
+        working-directory: ${{ inputs.working_dir }}
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        shell: bash
+        working-directory: ${{ inputs.working_dir }}
